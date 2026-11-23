@@ -1,0 +1,38 @@
+---
+en:
+  calendars:
+    nav: Calendar
+    show:
+      title: Calendar
+      previous_month: Previous month
+      next_month: Next month
+      today: Today
+      month_in: In
+      month_out: Out
+      month_net: Net
+      transfers_note: Includes transfers between your accounts. Pending and scheduled transactions are counted and shown in italics.
+      unconvertible:
+        one: 1 transaction has no exchange rate and is left out of the totals.
+        other: "%{count} transactions have no exchange rate and are left out of the totals."
+      no_layers: Turn on a layer to see the calendar.
+      empty_month: Nothing this month.
+    layer_toggles:
+      transactions: Transactions
+      bills: Bills
+    day_totals:
+      net: "Net %{amount}"
+      pending:
+        one: 1 pending
+        other: "%{count} pending"
+      pending_tooltip: Includes pending or scheduled transactions that haven't settled yet
+    day:
+      in: In
+      out: Out
+      net: Net
+      pending_note:
+        one: "Includes 1 pending or scheduled transaction (in %{income}, out %{spending})."
+        other: "Includes %{count} pending or scheduled transactions (in %{income}, out %{spending})."
+      empty: No transactions on this day.
+      view_in_transactions: View in Transactions
+    day_transaction:
+      excluded: Excluded

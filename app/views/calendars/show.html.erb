@@ -1,0 +1,81 @@
+<div class="space-y-4 pb-6 lg:pb-12">
+  <header class="flex justify-between items-center gap-2 text-primary font-medium">
+    <h1 class="text-xl"><%= t(".title") %></h1>
+  </header>
+
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-1 min-w-0">
+      <%= render DS::Link.new(
+            icon: "chevron-left",
+            variant: "ghost",
+            href: calendar_month_path(@month - 1.month),
+            "aria-label": t(".previous_month")
+          ) %>
+      <%= render DS::Link.new(
+            icon: "chevron-right",
+            variant: "ghost",
+            href: calendar_month_path(@month + 1.month),
+            "aria-label": t(".next_month")
+          ) %>
+      <h2 class="text-lg font-medium text-primary ml-2 truncate"><%= l(@month, format: "%B %Y") %></h2>
+      <% unless @month == Date.current.beginning_of_month %>
+        <%= render DS::Link.new(text: t(".today"), variant: "ghost", href: calendar_month_path) %>
+      <% end %>
+    </div>
+
+    <%= render "calendars/layer_toggles" %>
+  </div>
+
+  <div class="bg-container rounded-xl shadow-border-xs">
+    <% if @month_totals %>
+      <div class="px-4 py-3 border-b border-subdued space-y-0.5">
+        <p class="text-sm text-secondary">
+          <%= t(".month_in") %>
+          <span class="privacy-sensitive text-success font-medium"><%= format_money(@month_totals[:income]) %></span>
+          <span aria-hidden="true">·</span>
+          <%= t(".month_out") %>
+          <span class="privacy-sensitive text-primary font-medium"><%= format_money(@month_totals[:spending]) %></span>
+          <span aria-hidden="true">·</span>
+          <%= t(".month_net") %>
+          <span class="privacy-sensitive font-medium <%= calendar_net_class(@month_totals[:net]) %>"><%= format_money(@month_totals[:net]) %></span>
+        </p>
+        <p class="text-xs text-subdued"><%= t(".transfers_note") %></p>
+        <% if @cashflow.unconvertible_count.positive? %>
+          <p class="text-xs text-warning"><%= t(".unconvertible", count: @cashflow.unconvertible_count) %></p>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if @layers.empty? %>
+      <p class="p-4 text-sm text-secondary"><%= t(".no_layers") %></p>
+    <% else %>
+      <%# Month grid: desktop and tablet. %>
+      <div class="hidden md:block p-2">
+        <div class="grid grid-cols-7 text-xs font-medium text-secondary uppercase">
+          <% (0..6).each do |offset| %>
+            <div class="px-2 py-1"><%= t("date.abbr_day_names")[offset] %></div>
+          <% end %>
+        </div>
+        <div class="grid grid-cols-7 gap-px bg-alpha-black-100 theme-dark:bg-alpha-white-200 rounded-lg overflow-hidden">
+          <% (@grid_start..@grid_end).each do |date| %>
+            <%= render "calendars/day_cell", date: date, in_month: date.between?(@month, @month.end_of_month) %>
+          <% end %>
+        </div>
+      </div>
+
+      <%# Mobile: an agenda of the month's days that have something on them. %>
+      <div class="md:hidden divide-y divide-subdued">
+        <% agenda_days = (@month..@month.end_of_month).select do |date|
+             (@cashflow && !@cashflow.day(date).empty?) || (@bills && @bills.on(date).any?)
+           end %>
+        <% if agenda_days.empty? %>
+          <p class="p-4 text-sm text-secondary"><%= t(".empty_month") %></p>
+        <% else %>
+          <% agenda_days.each do |date| %>
+            <%= render "calendars/agenda_day", date: date %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,23 @@
+<%# locals: (date:, in_month:) %>
+<% day = @cashflow&.day(date) %>
+<div class="<%= class_names("bg-container min-h-24 p-1.5 space-y-1", "opacity-40": !in_month) %>">
+  <%# The date and totals open the day's drawer; bill chips below are their
+      own links, so they sit outside this one. %>
+  <%= link_to calendar_day_path(date: date.iso8601),
+        data: { turbo_frame: "drawer", turbo_prefetch: false },
+        class: "block rounded px-0.5 hover:bg-surface-hover focus-ring -outline-offset-2" do %>
+    <p class="text-xs <%= date == Date.current ? "font-bold text-link" : "text-secondary" %>">
+      <span aria-hidden="true"><%= date.day %></span>
+      <span class="sr-only"><%= l(date, format: :long) %></span>
+    </p>
+    <% if day && !day.empty? %>
+      <%= render "calendars/day_totals", day: day %>
+    <% end %>
+  <% end %>
+
+  <% if @bills %>
+    <% @bills.on(date).each do |occurrence| %>
+      <%= render "bills/calendar_chip", occurrence: occurrence %>
+    <% end %>
+  <% end %>
+</div>

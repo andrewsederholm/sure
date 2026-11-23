@@ -510,6 +510,10 @@ Rails.application.routes.draw do
   # Hub page fronting budgets + goals under a single "Plan" nav entry.
   resource :plan, only: :show
 
+  # Cash-flow calendar (fork feature): month grid plus a drawer per day.
+  resource :calendar, only: :show
+  get "calendar/days/:date", to: "calendars#day", as: :calendar_day, constraints: { date: /\d{4}-\d{2}-\d{2}/ }
+
   # Family-wide investment hub, built on the Reports section framework.
   resource :portfolio, only: :show do
     patch :update_preferences

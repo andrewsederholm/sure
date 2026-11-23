@@ -1,0 +1,23 @@
+<%# locals: (day:) %>
+<%# In, out and net for one day. When everything on the day is pending the
+    whole block fades; when only part is, a clock says how much. %>
+<div class="<%= class_names("text-xs leading-tight tabular-nums space-y-0.5", "italic opacity-60": day.all_pending?) %>">
+  <% if day.income.positive? %>
+    <p class="privacy-sensitive text-success">+<%= format_money(day.income) %></p>
+  <% end %>
+  <% if day.spending.positive? %>
+    <p class="privacy-sensitive text-primary">−<%= format_money(day.spending) %></p>
+  <% end %>
+  <% if day.income.positive? && day.spending.positive? %>
+    <p class="privacy-sensitive font-medium <%= calendar_net_class(day.net) %>">
+      <%= t("calendars.day_totals.net", amount: format_money(day.net)) %>
+    </p>
+  <% end %>
+  <% if day.pending? %>
+    <p class="flex items-center gap-1 text-subdued italic"
+       title="<%= t("calendars.day_totals.pending_tooltip") %>">
+      <%= icon "clock", size: "xs" %>
+      <span><%= t("calendars.day_totals.pending", count: day.pending_count) %></span>
+    </p>
+  <% end %>
+</div>

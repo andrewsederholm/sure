@@ -1,0 +1,56 @@
+<%# One day's transactions, in the drawer, so the calendar stays put behind
+    it. Rows open the usual transaction drawer in its place. %>
+<%= render DS::Dialog.new(variant: :drawer) do |dialog| %>
+  <% dialog.with_header(title: l(@date, format: :long)) %>
+
+  <% dialog.with_body do %>
+    <div class="space-y-4">
+      <% unless @summary.empty? %>
+        <dl class="grid grid-cols-3 gap-2 text-sm">
+          <div>
+            <dt class="text-xs text-secondary"><%= t(".in") %></dt>
+            <dd class="privacy-sensitive font-medium text-success"><%= format_money(@summary.income) %></dd>
+          </div>
+          <div>
+            <dt class="text-xs text-secondary"><%= t(".out") %></dt>
+            <dd class="privacy-sensitive font-medium text-primary"><%= format_money(@summary.spending) %></dd>
+          </div>
+          <div>
+            <dt class="text-xs text-secondary"><%= t(".net") %></dt>
+            <dd class="privacy-sensitive font-medium <%= calendar_net_class(@summary.net) %>"><%= format_money(@summary.net) %></dd>
+          </div>
+        </dl>
+        <% if @summary.pending? %>
+          <p class="flex items-center gap-1 text-xs text-subdued italic">
+            <%= icon "clock", size: "xs" %>
+            <span class="privacy-sensitive">
+              <%= t(".pending_note",
+                    count: @summary.pending_count,
+                    income: format_money(@summary.pending_income),
+                    spending: format_money(@summary.pending_spending)) %>
+            </span>
+          </p>
+        <% end %>
+      <% end %>
+
+      <% if @transactions.empty? %>
+        <p class="text-sm text-secondary"><%= t(".empty") %></p>
+      <% else %>
+        <ul class="divide-y divide-subdued rounded-lg border border-subdued">
+          <% @transactions.each do |transaction| %>
+            <%= render "calendars/day_transaction", transaction: transaction %>
+          <% end %>
+        </ul>
+      <% end %>
+
+      <%= render DS::Link.new(
+            text: t(".view_in_transactions"),
+            icon: "arrow-right",
+            icon_position: :right,
+            variant: "secondary",
+            full_width: true,
+            href: transactions_path(q: { start_date: @date.iso8601, end_date: @date.iso8601 }),
+            frame: "_top") %>
+    </div>
+  <% end %>
+<% end %>
