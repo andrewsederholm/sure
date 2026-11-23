@@ -1,0 +1,27 @@
+<%# Each switch submits "1" or "0" (DS::Toggle pairs a hidden field), so the
+    URL always states both layers and month links can carry them on. %>
+<%= form_with url: calendar_path, method: :get,
+      data: { controller: "auto-submit-form", turbo_action: "advance" },
+      class: "flex items-center gap-4" do %>
+  <%= hidden_field_tag :month, @month.strftime("%Y-%m"), id: nil %>
+
+  <div class="flex items-center gap-2">
+    <%= render DS::Toggle.new(
+          id: "calendar_layer_transactions",
+          name: "transactions",
+          checked: @layers.include?("transactions"),
+          data: { auto_submit_form_target: "auto" }) %>
+    <label for="calendar_layer_transactions" class="text-sm text-primary"><%= t(".transactions") %></label>
+  </div>
+
+  <% if @bills_available %>
+    <div class="flex items-center gap-2">
+      <%= render DS::Toggle.new(
+            id: "calendar_layer_bills",
+            name: "bills",
+            checked: @layers.include?("bills"),
+            data: { auto_submit_form_target: "auto" }) %>
+      <label for="calendar_layer_bills" class="text-sm text-primary"><%= t(".bills") %></label>
+    </div>
+  <% end %>
+<% end %>

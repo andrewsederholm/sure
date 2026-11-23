@@ -1,0 +1,22 @@
+<%# locals: (date:) %>
+<% day = @cashflow&.day(date) %>
+<div class="p-3 space-y-1.5">
+  <%= link_to calendar_day_path(date: date.iso8601),
+        data: { turbo_frame: "drawer", turbo_prefetch: false },
+        class: "flex items-start justify-between gap-3 rounded focus-ring -outline-offset-2" do %>
+    <p class="text-xs font-medium uppercase <%= date == Date.current ? "text-link" : "text-secondary" %>">
+      <%= l(date, format: :long) %>
+    </p>
+    <% if day && !day.empty? %>
+      <div class="text-right">
+        <%= render "calendars/day_totals", day: day %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% if @bills %>
+    <% @bills.on(date).each do |occurrence| %>
+      <%= render "bills/calendar_chip", occurrence: occurrence %>
+    <% end %>
+  <% end %>
+</div>
