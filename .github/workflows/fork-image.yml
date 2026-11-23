@@ -1,0 +1,104 @@
+# Fork-only image pipeline for andrewsederholm/sure.
+#
+# Publishes ghcr.io/andrewsederholm/sure (linux/amd64) on every push to main:
+#   :latest, :main  -> newest green build of main
+#   :sha-<commit>   -> immutable tag for rollbacks
+#
+# Upstream's publish.yml is left untouched (and disabled in this fork's
+# Actions settings) so syncing with we-promise/sure never conflicts.
+
+name: Fork image
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'charts/**'
+      - 'mobile/**'
+      - 'desktop/**'
+      - 'docs/**'
+      - '**.md'
+  workflow_dispatch:
+
+concurrency:
+  group: fork-image
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  ci:
+    # Never run outside the fork, e.g. if this file lands upstream via a PR.
+    if: github.repository == 'andrewsederholm/sure'
+    uses: ./.github/workflows/ci.yml
+    with:
+      require_js_dependency_audit: false
+
+  build:
+    name: Build and push image
+    needs: [ci]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+
+      # Same version scheme upstream uses for main builds (YYYY.M.D-alpha).
+      - name: Generate embedded version
+        id: version
+        run: |
+          version="$(date -u +%Y.%-m.%-d)-alpha"
+          printf '%s\n' "$version" > .sure-version
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+
+      - name: Log in to the container registry
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: latest=false
+          tags: |
+            type=raw,value=latest
+            type=raw,value=main
+            type=sha,format=long,prefix=sha-
+          labels: |
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.title=Sure (andrewsederholm fork)
+            org.opencontainers.image.description=Sure Rails app built from the andrewsederholm/sure fork
+            org.opencontainers.image.licenses=AGPL-3.0
+
+      - name: Build and push
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+        with:
+          context: .
+          platforms: linux/amd64
+          build-args: BUILD_COMMIT_SHA=${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache-amd64
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache-amd64,mode=max
+          provenance: false
+          push: true
